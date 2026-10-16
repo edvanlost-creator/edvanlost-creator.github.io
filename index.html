@@ -122,6 +122,7 @@ width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);bor
 .hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .btn[disabled]{opacity:.6;cursor:wait}
 .okmark{width:64px;height:64px;border-radius:50%;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:34px;font-weight:700;margin-bottom:14px}
+.vida{font-family:"Iowan Old Style","Palatino Linotype",Georgia,serif;font-weight:700;font-size:clamp(26px,6vw,40px);line-height:1.1;margin:2px 0 14px;color:var(--ink)}
 .lista{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px 14px;font-size:14px}
 .lista li::before{content:"✓ ";color:var(--ok);font-weight:700}
 </style>
@@ -145,15 +146,15 @@ width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--bg);bor
 const CONFIG = {
 rede: 'Rede Maranata',
 evento: 'Encontro com Deus',
-datas: '25, 26 e 27 de setembro de 2026',
-prazo: '20/09/2026',
+datas: '11, 12 e 13 de dezembro de 2026',
+prazo: '06/12/2026',
 // Depois de criar o novo formulário, cole aqui o link de preenchimento (termina em /viewform)
 // Endereço do serviço que grava na planilha (termina em /exec). Vazio = modo de teste, nada é enviado.
 apiUrl: 'https://script.google.com/macros/s/AKfycbx-9OvcG_7z6LZAdZ-lAj2UyeXziUzvcnRGzwPx5aieuQU_K0RzTQyc3-KE-AG8oM6a/exec',
 formUrl: 'https://docs.google.com/forms/d/e/1FAIpQLSfUnGWAQQYE6tRGF4_241jbODBwbum2_4ZiJ6GmYKclvZqZAw/viewform',
 // e os números "entry" que o script do formulário mostra no log
 entries: { igreja: '1816526896', funcao: '1149804818', lider: '1089490326', discipulador: '1445188034' },
-msgOutraIgreja: 'Este encontro é exclusivo para quem congrega na Videira. Fale com o seu líder para entender os próximos passos.',
+msgOutraIgreja: 'Este encontro é voltado apenas para pessoas sem igreja, afastadas ou que nunca ouviram falar de Cristo. Encerre sua inscrição e procure o seu responsável.',
 pix: { chave: '23.821.493/0001-26', banco: 'Itaú', ag: '0285', cc: '12330-3', titular: 'VID INTERLAGOS' },
 tabela: [ // [rótulo, parcelas, valor cheio]
 ['Débito ou dinheiro', 0, 280],
@@ -171,7 +172,7 @@ const GRUPOS = [
 { titulo: 'Liderança',  itens: [
 { nome: 'Pastor (a)', nota: 'Pastor ou pastora', fator: 1 },
 { nome: 'Discipulador (a)', nota: 'Casal discipulador', fator: 1 },
-{ nome: 'Líder de célula', nota: 'Líder de célula', fator: 1 },
+{ nome: 'Líder de célula', rot: 'Líder', nota: 'Líder de célula', fator: 1 },
 { nome: 'Líder em Treinamento', nota: 'Em formação', fator: 1 },
 { nome: 'Consolidador', nota: 'Consolidação', fator: 1 },
 { nome: 'Acompanhante', nota: 'Vou acompanhar', fator: 1 } ] },
@@ -190,7 +191,17 @@ Kaio e Flávia
 César e Bruna
 - Edvan e Francieli
 Edvan e Francieli
-- Edvan e Francieli`;
+- Edvan e Francieli
+Raul e Aline
+- Marcelo e Taise
+Joelisson e Suellen
+- Marcelo e Taise
+Roberto e Cibele
+- Marcelo e Taise
+David e Silvana
+- Marcelo e Taise
+Marcelo e Taise
+- Marcelo e Taise`;
 const esc = t => t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function pessoa(txt){
 const m = txt.match(/^(.*?)\s*\(\s*REDE\s+(.+?)\s*\)\s*$/i);
@@ -304,7 +315,7 @@ $('#naoOutra').onclick = () => { state.step = 2; render(); };
 $('#simOutra').onclick = () => {
 $('#panel').innerHTML = `
 <button class="back" id="back">← Voltar</button>
-<h2>Inscrição não disponível</h2>
+<h2>Procure o seu responsável</h2>
 <p class="lead">${CONFIG.msgOutraIgreja}</p>
 <div class="free">Marcou sem querer? Volte e escolha "Não, congrego na Videira".</div>`;
 $('#back').onclick = () => render(false);
@@ -319,7 +330,7 @@ $('#panel').innerHTML = `
 ${GRUPOS.map(g => `
 <div class="group"><h3>${g.titulo}</h3>
 <div class="grid-f">${g.itens.map(f => `
-<button class="fcard ${f.destaque ? 'big' : ''}" data-f="${f.nome}"><b>${f.nome}</b><small>${f.nota}</small></button>`).join('')}
+<button class="fcard ${f.destaque ? 'big' : ''}" data-f="${f.nome}"><b>${f.rot || f.nome}</b><small>${f.nota}</small></button>`).join('')}
 </div></div>`).join('')}`;
 $('#back').onclick = () => { state.step = 1; render(false); };
 $('#panel').querySelectorAll('[data-f]').forEach(b => b.onclick = () => {
@@ -437,14 +448,11 @@ const valorDe = f => state.funcao.fator * f.v;
 function atualizarValor(){
 const f = FORMAS.find(x => x.texto === D().forma);
 if (!f) return;
-D().valor = valorDe(f).toFixed(2);
-const el = $('#valor'); if (el) el.value = D().valor;
 limparErro('valor');
 }
 function passo7(){
 const fn = state.funcao, isento = fn.fator === 0, p = CONFIG.pix;
 if (isento) { D().forma = FORMA_ISENTO; D().valor = '0'; }
-if (!D().dataPg) D().dataPg = hojeLocal();
 const linhas = FORMAS.map(f => {
 const total = valorDe(f);
 const sub = f.n > 1 ? `<small>${f.n}x de ${brl(total / f.n)}</small>` : f.n === 1 ? '<small>à vista no cartão</small>' : '<small>à vista</small>';
@@ -457,22 +465,22 @@ const pagamento = isento ? '' : `
 <div class="box" style="margin-top:16px"><h3>Seu pagamento</h3>
 ${campoHtml('forma', 'Forma de pagamento', opcoesHtml('forma', FORMAS.map(f => [f.texto, f.rot + ' · ' + brl(valorDe(f))])))}
 <div class="row2">
-${campoHtml('valor', 'Valor pago (R$)', inputHtml('valor', 'number', 'inputmode="decimal" step="0.01" min="0" max="1000"'))}
-${campoHtml('dataPg', 'Data do pagamento', inputHtml('dataPg', 'date', 'min="2026-01-01" max="' + hojeLocal() + '"'))}
+${campoHtml('valor', 'Valor pago (R$) · se já pagou', inputHtml('valor', 'number', 'inputmode="decimal" step="0.01" min="0" max="1000"'))}
+${campoHtml('dataPg', 'Data do pagamento · se já pagou', inputHtml('dataPg', 'date', 'min="2026-01-01" max="' + hojeLocal() + '"'))}
 </div>
 <div class="field" id="f-arquivo">
-<label for="arquivo">Comprovante de pagamento</label>
+<label for="arquivo">Comprovante de pagamento (opcional)</label>
 <input type="file" id="arquivo" accept="image/*,application/pdf">
-<small class="hint" id="arqInfo">${state.arquivo ? 'Arquivo anexado: ' + esc(state.arquivo.nome) : 'Tire uma foto ou envie o PDF do comprovante.'}</small>
+<small class="hint" id="arqInfo">${state.arquivo ? 'Arquivo anexado: ' + esc(state.arquivo.nome) : 'Se já pagou, anexe uma foto ou o PDF do comprovante.'}</small>
 <span class="msg-erro" hidden></span>
 </div>
 </div>`;
 $('#panel').innerHTML = `
 <button class="back" id="back">← Voltar</button>
 <h2>Pagamento</h2>
-<p class="lead">${isento ? 'Confira o resumo e envie sua inscrição.' : 'Pague, anexe o comprovante e envie sua inscrição.'}</p>
+<p class="lead">${isento ? 'Confira o resumo e envie sua inscrição.' : 'Pague até ' + CONFIG.prazo + ' e envie sua inscrição. Se já pagou, anexe o comprovante.'}</p>
 <div class="sum">
-<span class="chip"><em>Função</em>${fn.nome}</span>
+<span class="chip"><em>Função</em>${fn.rot || fn.nome}</span>
 <span class="chip"><em>Líder</em>${state.lider.nome}</span>
 <span class="chip"><em>Discipulador</em>${state.disc.nome}</span>
 </div>
@@ -531,8 +539,8 @@ async function enviar(){
 if (state.enviando) return;
 const regras = [];
 if (state.funcao.fator !== 0) {
-regras.push(['forma', obrig('Escolha a forma de pagamento.')], ['valor', v => Number(v) > 0 ? '' : 'Informe o valor pago.'],
-['dataPg', dataOk], ['arquivo', () => state.arquivo ? '' : 'Anexe o comprovante de pagamento.']);
+regras.push(['forma', obrig('Escolha a forma de pagamento.')]);
+if (D().dataPg) regras.push(['dataPg', dataOk]);
 }
 if (!validar(regras)) return;
 const d = D(), btn = $('#enviar');
@@ -565,10 +573,11 @@ m.scrollIntoView({ behavior: 'smooth', block: 'center' });
 function sucesso(j){
 state.step = 8; renderStepper();
 const d = D(), f = state.funcao;
-const linhas = [['Nome', d.nome.trim()], ['Função', f.nome], ['Líder', state.lider.nome], ['Discipulador', state.disc.nome],
-['Telefone', d.tel], ['Valor', f.fator === 0 ? 'Isento' : brl(Number(d.valor) || 0)], ['Recebida em', j.quando || '']];
+const linhas = [['Nome', d.nome.trim()], ['Função', f.rot || f.nome], ['Líder', state.lider.nome], ['Discipulador', state.disc.nome],
+['Telefone', d.tel], ['Valor', f.fator === 0 ? 'Isento' : (Number(d.valor) > 0 ? brl(Number(d.valor)) : 'A pagar até ' + CONFIG.prazo)], ['Recebida em', j.quando || '']];
 $('#panel').innerHTML = `
 <div class="okmark" aria-hidden="true">✓</div>
+<div class="vida">SUA VIDA NUNCA MAIS SERÁ A MESMA</div>
 <h2>Inscrição recebida!</h2>
 <p class="lead">${j.teste ? '<b>MODO DE TESTE:</b> nada foi enviado nem salvo.' : 'Guarde esta tela. Seu comprovante de inscrição será enviado para o WhatsApp que você cadastrou.'}</p>
 <div class="box"><h3>Resumo</h3><table>${linhas.map(([a, b]) => `<tr><td>${a}</td><td>${esc(String(b))}</td></tr>`).join('')}</table></div>
