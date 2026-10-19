@@ -204,43 +204,43 @@ const GRUPOS = [
 Linha sem traço = líder. Linha com "- " = discipulador daquele líder.
 Para indicar a rede, escreva (REDE NOME) no fim do nome. */
 const ESTRUTURA = `Sergio e Cintia
-- Edvan e Francieli
+- Edvan e Francieli (REDE Betel)
 Kaio e Flávia
-- Edvan e Francieli
+- Edvan e Francieli (REDE Betel)
 César e Bruna
-- Edvan e Francieli
+- Edvan e Francieli (REDE Betel)
 Edvan e Francieli
-- Edvan e Francieli
+- Edvan e Francieli (REDE Betel)
 Raul e Aline
-- Marcelo e Taise
+- Marcelo e Taise (REDE Sião)
 Joelisson e Suelen
-- Marcelo e Taise
+- Marcelo e Taise (REDE Sião)
 Roberto e Cibele
-- Marcelo e Taise
+- Marcelo e Taise (REDE Sião)
 David e Silvana
-- Marcelo e Taise
+- Marcelo e Taise (REDE Sião)
 Marcelo e Taise
-- Marcelo e Taise
+- Marcelo e Taise (REDE Sião)
 Marcos e Suellen
-- Gleydson e Angélica
+- Gleydson e Angélica (REDE Henotes)
 Marcelo e Riquele
-- Gleydson e Angélica
+- Gleydson e Angélica (REDE Henotes)
 Sergio e Idalina
-- Gleydson e Angélica
+- Gleydson e Angélica (REDE Henotes)
 Egilson e Vera
-- Gleydson e Angélica
+- Gleydson e Angélica (REDE Henotes)
 Thiago e Rejane
-- Lucas e Rosângela
+- Lucas e Rosângela (REDE Inmanuel)
 Ana e Rafael
-- Lucas e Rosângela
+- Lucas e Rosângela (REDE Inmanuel)
 Antenor e Isabel
-- Lucas e Rosângela
+- Lucas e Rosângela (REDE Inmanuel)
 Jean e Tainá
-- Gleydson e Angélica`;
+- Gleydson e Angélica (REDE Henotes)`;
 const esc = t => t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function pessoa(txt){
 const m = txt.match(/^(.*?)\s*\(\s*REDE\s+(.+?)\s*\)\s*$/i);
-return m ? { valor: txt, nome: esc(m[1]), rede: 'Rede ' + esc(m[2]) } : { valor: txt, nome: esc(txt), rede: '' };
+return m ? { valor: m[1].trim() + ' - Rede ' + m[2].trim(), nome: esc(m[1]), rede: 'Rede ' + esc(m[2]) } : { valor: txt, nome: esc(txt), rede: '' };
 }
 function parse(txt){
 const out = []; let cur = null;
@@ -451,7 +451,7 @@ $('#panel').innerHTML = `
 <h2>E o seu discipulador?</h2>
 <p class="lead">Discipuladores de ${l.nome}. Toque na foto do seu casal.</p>
 <div class="grid-p">${l.discs.map((d, i) => `
-<button class="pcard" data-i="${i}">${avatar(d.nome)}<b>${d.nome}</b></button>`).join('')}
+<button class="pcard" data-i="${i}">${avatar(d.nome)}<b>${d.nome}</b>${d.rede ? `<small>${d.rede}</small>` : ''}</button>`).join('')}
 </div>`;
 $('#back').onclick = () => { state.step = 4; render(); };
 $('#panel').querySelectorAll('[data-i]').forEach(b => b.onclick = () => {
@@ -519,7 +519,7 @@ $('#panel').innerHTML = `
 <div class="sum">
 <span class="chip"><em>Função</em>${fn.rot || fn.nome}</span>
 <span class="chip"><em>Líder</em>${state.lider.nome}</span>
-<span class="chip"><em>Discipulador</em>${state.disc.nome}</span>
+<span class="chip"><em>Discipulador</em>${state.disc.nome}${state.disc.rede ? ' · ' + state.disc.rede : ''}</span>
 </div>
 <div class="two">
 <div class="box"><h3>Valor da inscrição</h3>${valores}</div>
@@ -637,7 +637,7 @@ m.scrollIntoView({ behavior: 'smooth', block: 'center' });
 function sucesso(j){
 state.step = 8; renderStepper();
 const d = D(), f = state.funcao;
-const linhas = [['Nome', d.nome.trim()], ['Função', f.rot || f.nome], ['Líder', state.lider.nome], ['Discipulador', state.disc.nome],
+const linhas = [['Nome', d.nome.trim()], ['Função', f.rot || f.nome], ['Líder', state.lider.nome], ['Discipulador', state.disc.nome + (state.disc.rede ? ' · ' + state.disc.rede : '')],
 ['Telefone', d.tel], ['Valor', f.fator === 0 ? 'Isento' : (Number(d.valor) > 0 ? brl(Number(d.valor)) : 'A pagar até ' + fmtData(d.dataPg))], ['Recebida em', j.quando || '']];
 $('#panel').innerHTML = `
 <div class="okmark" aria-hidden="true">✓</div>
